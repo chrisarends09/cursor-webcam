@@ -1,0 +1,14 @@
+services:
+  webcam:
+    build: .
+    container_name: webcam
+    volumes:
+      - ./snapshots:/app/snapshots
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=America/Los_Angeles  # West Coast timezone
+
+volumes:
+  snapshots:
+
