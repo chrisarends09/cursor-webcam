@@ -14,7 +14,10 @@ import schedule
 import sys
 import argparse
 
-DISCORD_WEBHOOK = "https://discordapp.com/api/webhooks/1325728300475088916/Tm1O2ubFDci_7y12Qn0eeFTwnaJlipV4glXCBdby7gt9FBAJCt1nIk23Mh5BDxCFuOuC"
+# Remove the hardcoded webhook URL and use environment variable
+DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK_URL')
+if not DISCORD_WEBHOOK:
+    raise ValueError("DISCORD_WEBHOOK_URL environment variable is not set")
 
 def get_stream_url(html_content, camera_name):
     """Extract the actual stream URL from the HTML content."""
