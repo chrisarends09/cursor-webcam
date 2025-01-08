@@ -13,11 +13,15 @@ import re
 import schedule
 import sys
 import argparse
+from colorama import init, Fore, Back, Style
+from webcam_handlers import WebcamManager
 
-# Remove the hardcoded webhook URL and use environment variable
-DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK_URL')
-if not DISCORD_WEBHOOK:
-    raise ValueError("DISCORD_WEBHOOK_URL environment variable is not set")
+init(autoreset=True)  # Initialize colorama
+
+# Update the webhook environment variable
+DISCORD_WEBHOOKS = os.getenv('DISCORD_WEBHOOK_URLS', '').split(',')
+if not DISCORD_WEBHOOKS or not DISCORD_WEBHOOKS[0]:
+    raise ValueError("DISCORD_WEBHOOK_URLS environment variable is not set")
 
 def get_stream_url(html_content, camera_name):
     """Extract the actual stream URL from the HTML content."""
@@ -57,19 +61,38 @@ def get_stream_url(html_content, camera_name):
         logging.exception("Stack trace:")
         return None
 
-def send_to_discord(filepath, camera_name):
-    """Send image to Discord webhook"""
+def send_to_discord(file_path, description):
+    """Send a file to multiple Discord webhooks."""
     try:
-        with open(filepath, 'rb') as f:
-            files = {'file': (os.path.basename(filepath), f)}
-            payload = {
-                'content': f"New snapshot from {camera_name} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            }
-            response = requests.post(DISCORD_WEBHOOK, data=payload, files=files)
-            response.raise_for_status()
-            logging.info(f"Successfully sent snapshot to Discord for {camera_name}")
+        if not os.path.exists(file_path):
+            logging.error(f"File not found: {file_path}")
+            return False
+            
+        logging.info(f"Sending file to Discord webhooks: {file_path}")
+        success = False
+        
+        for webhook_url in DISCORD_WEBHOOKS:
+            try:
+                with open(file_path, 'rb') as f:
+                    files = {
+                        'file': (os.path.basename(file_path), f)
+                    }
+                    response = requests.post(
+                        webhook_url.strip(),  # Remove any whitespace
+                        files=files,
+                        data={'content': f"{description} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"}
+                    )
+                    response.raise_for_status()
+                    success = True
+                    logging.info(f"Successfully sent snapshot to Discord webhook for {description}")
+            except Exception as e:
+                logging.error(f"Failed to send to webhook {webhook_url[:50]}...: {str(e)}")
+                
+        return success
+            
     except Exception as e:
-        logging.error(f"Failed to send snapshot to Discord for {camera_name}: {str(e)}")
+        logging.error(f"Failed to send snapshot to Discord for {description}: {str(e)}")
+        return False
 
 def capture_from_m3u8(stream_url, output_path, camera_name):
     """Capture a single frame from an HLS stream using ffmpeg."""
@@ -180,48 +203,59 @@ def capture_all_cameras(cameras, output_dir):
     for camera in cameras:
         capture_snapshot_from_url(camera["url"], camera["name"], output_dir)
     logging.info("Finished capture for all cameras")
+    
+    # Send updated schedule status after captures
+    if schedule.next_run():  # Only send if there's a next scheduled run
+        next_run = schedule.next_run().strftime('%Y-%m-%d %H:%M:%S')
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        schedule_info = (
+            f"🔄 Schedule Status Update:\n"
+            f"• Snapshots captured at: {current_time}\n"
+            f"• Next capture scheduled for: {next_run}"
+        )
+        send_schedule_status_to_discord(schedule_info)
 
 def get_schedule_choice():
     """Prompt user for schedule choice"""
     logging.info("Starting webcam snapshot script")
-    print("\nHow would you like to run the webcam snapshots?")
-    print("\n1. Run once")
+    print(f"\n{Fore.CYAN}How would you like to run the webcam snapshots?{Style.RESET_ALL}")
+    print(f"\n{Fore.GREEN}1. Run once{Style.RESET_ALL}")
     print("   • Takes one snapshot of each camera immediately")
     print("   • Sends images to Discord")
     print("   • Exits after completion")
-    print("\n2. Run recurring")
+    print(f"\n{Fore.GREEN}2. Run recurring{Style.RESET_ALL}")
     print("   • Takes snapshots at regular intervals")
     print("   • Continues running until stopped")
     print("   • Sends images to Discord after each capture")
     print("   • Can choose interval: 1, 8, 12, or 24 hours")
-    print("\nNote: All snapshots are saved in the 'snapshots' directory")
-    print("      and sent to Discord automatically.\n")
+    print(f"\n{Fore.YELLOW}Note: All snapshots are saved in the 'snapshots' directory")
+    print(f"      and sent to Discord automatically.{Style.RESET_ALL}\n")
     
     while True:
         try:
-            choice = input("Enter your choice (1 Run Once or 2 Run Recurring): ").strip()
+            choice = input(f"{Fore.CYAN}Enter your choice ({Fore.GREEN}1 Run Once{Fore.CYAN} or {Fore.GREEN}2 Run Recurring{Fore.CYAN}): {Style.RESET_ALL}").strip()
             if choice in ['1', '2']:
                 logging.info(f"User selected {'one-time' if choice == '1' else 'recurring'} execution")
                 return choice
-            print("\nInvalid choice. Please enter:")
-            print("1 - for a single snapshot now")
-            print("2 - for recurring snapshots at intervals")
+            print(f"\n{Fore.RED}Invalid choice. Please enter:{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}1{Style.RESET_ALL} - for a single snapshot now")
+            print(f"{Fore.GREEN}2{Style.RESET_ALL} - for recurring snapshots at intervals")
         except Exception as e:
-            print("\nInvalid input. Please try again.")
+            print(f"\n{Fore.RED}Invalid input. Please try again.{Style.RESET_ALL}")
 
 def get_interval_choice():
     """Prompt user for interval choice if running recurring"""
-    print("\nHow often should snapshots be taken?")
-    print("\n1. Every 1 hour")
+    print(f"\n{Fore.CYAN}How often should snapshots be taken?{Style.RESET_ALL}")
+    print(f"\n{Fore.GREEN}1. Every 1 hour{Style.RESET_ALL}")
     print("   • Best for detailed monitoring")
     print("   • Generates 24 snapshots per day")
-    print("\n2. Every 8 hours")
+    print(f"\n{Fore.GREEN}2. Every 8 hours{Style.RESET_ALL}")
     print("   • Good for tracking major changes")
     print("   • Generates 3 snapshots per day")
-    print("\n3. Every 12 hours")
+    print(f"\n{Fore.GREEN}3. Every 12 hours{Style.RESET_ALL}")
     print("   • Twice daily snapshots")
     print("   • Morning and evening coverage")
-    print("\n4. Every 24 hours")
+    print(f"\n{Fore.GREEN}4. Every 24 hours{Style.RESET_ALL}")
     print("   • Once daily snapshot")
     print("   • Minimal storage usage")
     
@@ -234,30 +268,39 @@ def get_interval_choice():
     
     while True:
         try:
-            choice = input("\nEnter your choice (1-4): ").strip()
+            choice = input(f"\n{Fore.CYAN}Enter your choice (1-4): {Style.RESET_ALL}").strip()
             if choice in intervals:
                 hours = intervals[choice]
                 logging.info(f"User selected {hours} hour{'s' if hours > 1 else ''} interval")
                 return hours
-            print("\nInvalid choice. Please enter a number between 1 and 4:")
-            print("1 - Every hour")
-            print("2 - Every 8 hours")
-            print("3 - Every 12 hours")
-            print("4 - Every 24 hours")
+            print(f"\n{Fore.RED}Invalid choice. Please enter a number between 1 and 4:{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}1{Style.RESET_ALL} - Every hour")
+            print(f"{Fore.GREEN}2{Style.RESET_ALL} - Every 8 hours")
+            print(f"{Fore.GREEN}3{Style.RESET_ALL} - Every 12 hours")
+            print(f"{Fore.GREEN}4{Style.RESET_ALL} - Every 24 hours")
         except Exception as e:
-            print("\nInvalid input. Please try again.")
+            print(f"\n{Fore.RED}Invalid input. Please try again.{Style.RESET_ALL}")
 
 def send_schedule_status_to_discord(schedule_info):
-    """Send schedule status to Discord webhook"""
+    """Send schedule status to multiple Discord webhooks"""
     try:
-        payload = {
-            'content': f"📅 Current Schedule Status:\n{schedule_info}"
-        }
-        response = requests.post(DISCORD_WEBHOOK, json=payload)
-        response.raise_for_status()
-        logging.info("Successfully sent schedule status to Discord")
+        success = False
+        for webhook_url in DISCORD_WEBHOOKS:
+            try:
+                payload = {
+                    'content': f"📅 Current Schedule Status:\n{schedule_info}"
+                }
+                response = requests.post(webhook_url.strip(), json=payload)
+                response.raise_for_status()
+                success = True
+                logging.info("Successfully sent schedule status to Discord webhook")
+            except Exception as e:
+                logging.error(f"Failed to send to webhook {webhook_url[:50]}...: {str(e)}")
+                
+        return success
     except Exception as e:
         logging.error(f"Failed to send schedule status to Discord: {str(e)}")
+        return False
 
 def get_next_run_time(interval_hours):
     """Get the next scheduled run time"""
@@ -291,15 +334,25 @@ def get_run_settings():
     return args.mode, args.interval
 
 def main():
-    # Configure logging
+    # Configure logging with colors
+    logging_format = (
+        f"{Fore.CYAN}%(asctime)s{Style.RESET_ALL} - "
+        f"%(levelname)s{Style.RESET_ALL} - "
+        f"{Fore.WHITE}%(message)s{Style.RESET_ALL}"
+    )
+    
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
+        format=logging_format,
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler('webcam_snapshot.log')
+            logging.FileHandler('webcam_snapshot.log', encoding='utf-8')  # Plain format for file
         ]
     )
+
+    # Initialize webcam manager
+    manager = WebcamManager()
+    webcams = manager.load_webcams('webcams.yaml')
 
     # Get settings either from arguments or prompts
     mode, interval = get_run_settings()
@@ -309,47 +362,52 @@ def main():
     output_dir = "snapshots"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Camera URLs and names
-    cameras = [
-        {
-            "name": "Base_Area",
-            "url": "https://api.wetmet.net/widgets/stream/frame.php?uid=072e3c1a6016174851619e4180909d3d"
-        },
-        {
-            "name": "Top_of_Blue",
-            "url": "https://api.wetmet.net/widgets/stream/frame.php?uid=c878c340832e23aab90526673b71cc17"
-        }
-    ]
+    def capture_all():
+        """Capture all configured webcams"""
+        for resort, cams in webcams['webcams'].items():
+            for cam in cams:
+                logging.info(f"Capturing {cam['description']}")
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                output_path = f"{output_dir}/{cam['name']}_{timestamp}.jpg"
+                if manager.capture_webcam(cam, output_dir):
+                    send_to_discord(output_path, cam['description'])
+        
+        # Send schedule status after captures in recurring mode
+        if mode == 'recurring' and schedule.next_run():
+            next_run = schedule.next_run().strftime('%Y-%m-%d %H:%M:%S')
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Build list of active cameras by resort
+            camera_list = []
+            for resort, cams in webcams['webcams'].items():
+                resort_cams = [f"  • {cam['name']} ({cam['description']})" for cam in cams]
+                if resort_cams:
+                    camera_list.append(f"📍 {resort.replace('_', ' ').title()}:")
+                    camera_list.extend(resort_cams)
+            
+            schedule_info = (
+                f"🔄 Schedule Status Update:\n"
+                f"• Snapshots captured at: {current_time}\n"
+                f"• Next capture scheduled for: {next_run}\n\n"
+                f"📸 Active Cameras:\n"
+                f"{chr(10).join(camera_list)}"  # chr(10) is newline
+            )
+            send_schedule_status_to_discord(schedule_info)
 
     if mode == 'once':
-        # Run once
-        logging.info("Running one-time capture")
-        capture_all_cameras(cameras, output_dir)
-        schedule_info = "✅ One-time capture completed. Script will now exit."
-        send_schedule_status_to_discord(schedule_info)
-        logging.info("One-time capture completed")
+        capture_all()
         return
-    
+
     # Schedule recurring captures
-    interval_hours = interval
-    schedule.every(interval_hours).hours.do(capture_all_cameras, cameras, output_dir)
-    next_run = get_next_run_time(interval_hours)
+    schedule.every(interval).hours.do(capture_all)
+    next_run = get_next_run_time(interval)
     
     # Do initial capture
     logging.info("Performing initial capture")
-    capture_all_cameras(cameras, output_dir)
-    
-    # Send schedule status to Discord
-    schedule_info = (
-        f"🔄 Schedule Status:\n"
-        f"• Running every {interval_hours} hour{'s' if interval_hours > 1 else ''}\n"
-        f"• Next capture scheduled for: {next_run}\n"
-        f"• Initial capture completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-    send_schedule_status_to_discord(schedule_info)
+    capture_all()
     
     # Keep the script running
-    logging.info(f"Script will run every {interval_hours} hour{'s' if interval_hours > 1 else ''}")
+    logging.info(f"Script will run every {interval} hour{'s' if interval > 1 else ''}")
     logging.info(f"Next capture scheduled for: {next_run}")
     
     last_log_time = datetime.now()

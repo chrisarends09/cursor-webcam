@@ -1,0 +1,67 @@
+Webcam URLS
+
+##############################################################################################
+##############################################################################################
+
+- Mt Hood Meadows Snowstake Webcam
+- This link will generate a .jpg image of the snowstake Webcam
+b9.hdrelay.com/camera/63cadf1f426d0a9136dc81da/snapshot
+
+- This link will give a live feed of the Snowstake Webcam if you click on the play button.
+https://manage.hdrelay.com/webPlayer/iframe/63d44d707803e58fc2e6d8cc
+
+- Mt Hood Meadows Base Area Webcam
+https://api.wetmet.net/widgets/stream/frame.php?uid=072e3c1a6016174851619e4180909d3d
+
+- Mt Hood Meadows Top of Blue Webcam
+https://api.wetmet.net/widgets/stream/frame.php?uid=c878c340832e23aab90526673b71cc17
+
+##############################################################################################
+##############################################################################################
+
+- Mt Bachelor Webcams
+This is not a live feed. This is a list of webcams. https://www.mtbachelor.com/the-mountain/webcams
+
+- Mt Bachelor Snowstake Webcam
+https://camstreamer.com/embed/yjcHJseJyObWi2YvoWLlmU8inSaI5aY19Jq6Hcoz
+
+- Mt Bachelor Top of Outback Webcam
+https://camstreamer.com/embed/UrNT6OriCimffScyTuLZhqgCZAtHSsjHZrgotFNU
+
+- Mt Bachelor Top of Cloudchaser Webcam
+https://camstreamer.com/embed/7WfyGuaHvti06WYRCx5L1XdgpKWyxHqN0iaDpKR4
+
+- Mt Bachelor West Willage Webcam
+https://api.mtbachelor.com/api/v1/cams/mtn/1
+
+- Mt Bachelor West Village Webcam
+https://api.mtbachelor.com/api/v1/cams/mtn/2
+
+- Mt Bachelor Top of Outback Webcam
+https://api.mtbachelor.com/api/v1/cams/mtn/9
+
+- Mt Bachelor West Village Area Webcam
+https://api.mtbachelor.com/api/v1/cams/mtn/13
+
+
+##############################################################################################
+##############################################################################################
+
+- Mt Hood Skibowl Webcams
+
+- Skibowl Upper Bowl live Webcam
+https://video.nest.com/live/npsFa2hlJU
+
+- Skibowl East Base Area live Webcam
+https://video.nest.com/live/V7j7Fc9F0o
+
+
+##############################################################################################
+##############################################################################################
+
+- Halfway Oregon Webcam
+https://e1-na8.angelcam.com/cameras/43448/streams/mjpeg/stream.mjpeg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9%2EeyJpYXQiOjE3MzYzMjA5NzgsIm5iZiI6MTczNjMyMDg1OCwiZXhwIjoxNzM2MzIxMDk4LCJkaWQiOiI0MzQ0OCJ9%2EzgTtJB3EuOD2pX0IKhSgvwxRMnw0GPZyr55ISc7QOTM
+https://e1-na8.angelcam.com/cameras/43448/streams/mjpeg/stream.mjpeg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9%2EeyJpYXQiOjE3MzYzMjQzMTUsIm5iZiI6MTczNjMyNDE5NSwiZXhwIjoxNzM2MzI0NDM1LCJkaWQiOiI0MzQ0OCJ9%2EAJHsWvv2iEyzI6ao2ULVNCuy5%2DrO%2DArcHfWBO%5FAiCak
+##############################################################################################
+##############################################################################################
+

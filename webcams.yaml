@@ -1,0 +1,56 @@
+webcams:
+  mt_hood_meadows:
+    - name: "MHM_Snowstake"
+      type: "direct_image"
+      url: "https://b9.hdrelay.com/camera/63cadf1f426d0a9136dc81da/snapshot?format=jpeg"
+      description: "Mt Hood Meadows Snowstake Webcam"
+      
+    - name: "MHM_Base_Area"
+      type: "wetmet"
+      url: "https://api.wetmet.net/widgets/stream/frame.php?uid=072e3c1a6016174851619e4180909d3d"
+      description: "Mt Hood Meadows Base Area Webcam"
+      
+    - name: "MHM_Top_Blue"
+      type: "wetmet"
+      url: "https://api.wetmet.net/widgets/stream/frame.php?uid=c878c340832e23aab90526673b71cc17"
+      description: "Mt Hood Meadows Top of Blue Webcam"
+
+  mt_bachelor:
+    - name: "MTB_Snowstake"
+      type: "camstreamer"
+      url: "https://camstreamer.com/embed/yjcHJseJyObWi2YvoWLlmU8inSaI5aY19Jq6Hcoz"
+      description: "Mt Bachelor Snowstake Webcam"
+      
+    - name: "MTB_Outback"
+      type: "api"
+      url: "https://api.mtbachelor.com/api/v1/cams/mtn/9"
+      description: "Mt Bachelor Top of Outback Webcam"
+      
+    - name: "MTB_West_Village"
+      type: "api"
+      url: "https://api.mtbachelor.com/api/v1/cams/mtn/13"
+      description: "Mt Bachelor West Village Area Webcam"
+
+  skibowl:
+    - name: "SKB_Upper_Bowl"
+      type: "nest"
+      url: "https://video.nest.com/embedded/live/npsFa2hlJU"
+      description: "Skibowl Upper Bowl live Webcam"
+      
+    - name: "SKB_East_Base"
+      type: "nest"
+      url: "https://video.nest.com/embedded/live/V7j7Fc9F0o"
+      description: "Skibowl East Base Area live Webcam" 
+
+  other_locations:
+    - name: "Halfway_Oregon"
+      type: "click2stream"
+      url: "https://srpcs.click2stream.com/"
+      description: "Halfway Oregon Town Webcam"
+
+  odot_cameras:
+    - name: "Cabbage_Hill"
+      type: "html_image"
+      url: "https://www.oregontravels.com/_roads/ne_I84_CabbageHill_DeadmanPass_623.html"
+      image_selector: "img[src*='DeadmanP-CabbageHill']"
+      description: "I-84 at Cabbage Hill - Deadman Pass"

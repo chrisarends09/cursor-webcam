@@ -3,3 +3,6 @@ numpy
 requests
 beautifulsoup4
 schedule
+colorama
+pyyaml
+selenium
