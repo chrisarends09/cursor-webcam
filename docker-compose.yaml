@@ -9,6 +9,7 @@ services:
     environment:
       - TZ=America/Los_Angeles
       - DISCORD_WEBHOOK_URLS=${DISCORD_WEBHOOK_URLS}
+    restart: unless-stopped
 
 volumes:
   snapshots:
