@@ -49,14 +49,20 @@ COPY webcams.yaml .
 ENV DISPLAY=:99
 ENV PYTHONUNBUFFERED=1
 
-# Create a script to start Xvfb and the application
+# Create scripts for different run modes
 RUN echo '#!/bin/bash\n\
 Xvfb :99 -screen 0 1280x1024x24 &\n\
 sleep 1\n\
-exec python -u webcam_snapshot.py --interactive\n\
-' > /app/start.sh \
-    && chmod +x /app/start.sh
+exec python -u webcam_snapshot.py --mode once --no-interactive\n\
+' > /app/start-single.sh \
+    && chmod +x /app/start-single.sh
 
-# Run the start script
-ENTRYPOINT ["/app/start.sh"]
+RUN echo '#!/bin/bash\n\
+Xvfb :99 -screen 0 1280x1024x24 &\n\
+sleep 1\n\
+exec python -u webcam_snapshot.py --mode recurring --interval 1 --no-interactive\n\
+' > /app/start-recurring.sh \
+    && chmod +x /app/start-recurring.sh
 
+# Default to single mode
+ENTRYPOINT ["/app/start-single.sh"]
