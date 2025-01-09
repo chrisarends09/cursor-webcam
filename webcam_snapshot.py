@@ -309,29 +309,29 @@ def get_next_run_time(interval_hours):
 
 def get_run_settings():
     """Get run settings either from arguments or interactive input"""
-    # First try to get from command line
     parser = argparse.ArgumentParser(description='Webcam Snapshot Script')
     parser.add_argument('--mode', type=str, choices=['once', 'recurring'],
                        help='Run mode: "once" for single run or "recurring" for scheduled runs')
     parser.add_argument('--interval', type=int, choices=[1, 8, 12, 24],
                        help='Interval in hours (required if mode is recurring)')
-    parser.add_argument('--interactive', action='store_true',
-                       help='Use interactive prompts instead of command line arguments')
+    parser.add_argument('--no-interactive', action='store_true',
+                       help='Disable interactive prompts')
     
     args = parser.parse_args()
     
-    # If interactive flag is set or no mode specified, use prompts
-    if args.interactive or args.mode is None:
-        mode_choice = get_schedule_choice()
-        mode = 'once' if mode_choice == '1' else 'recurring'
-        interval = None if mode == 'once' else get_interval_choice()
-        return mode, interval
+    # If mode is specified and no-interactive is set, use command line args
+    if args.mode and args.no_interactive:
+        logging.info(f"Using command line arguments: mode={args.mode}, interval={args.interval}")
+        if args.mode == 'recurring' and args.interval is None:
+            parser.error('--interval is required when mode is recurring')
+        return args.mode, args.interval
     
-    # Otherwise use command line arguments
-    if args.mode == 'recurring' and args.interval is None:
-        parser.error('--interval is required when mode is recurring')
-    
-    return args.mode, args.interval
+    # Otherwise use interactive prompts
+    logging.info("Using interactive prompts")
+    mode_choice = get_schedule_choice()
+    mode = 'once' if mode_choice == '1' else 'recurring'
+    interval = None if mode == 'once' else get_interval_choice()
+    return mode, interval
 
 def main():
     # Configure logging with colors

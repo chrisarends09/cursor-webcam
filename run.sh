@@ -18,6 +18,12 @@ check_compose_file() {
     fi
 }
 
+# Function to check if container is running
+check_running() {
+    docker ps --format "{{.Names}}" | grep -q "^webcam$"
+    return $?
+}
+
 # Function to display menu
 show_menu() {
     echo -e "${CYAN}Webcam Snapshot Script Control${NC}"
@@ -26,7 +32,7 @@ show_menu() {
     echo "   - Choose 'Run once' to take a single set of snapshots"
     echo "   - Choose 'Run recurring' to take snapshots at regular intervals"
     echo -e "   - ${YELLOW}Recurring intervals available: 1, 8, 12, or 24 hours${NC}"
-    echo "   - All snapshots are saved locally and sent to Discord <-- You need to set the correct webhook in the .env file"
+    echo "   - All snapshots are saved locally and sent to Discord"
     echo
     echo -e "${GREEN}2. Stop current capture${NC}"
     echo "   - Stops any running capture process"
@@ -45,11 +51,33 @@ show_menu() {
 # Function to start capture
 start_capture() {
     check_compose_file
-    echo -e "${CYAN}Starting container...${NC}"
-    docker compose -f "$COMPOSE_FILE" down >/dev/null 2>&1  # Ensure clean start
     
-    echo -e "${GREEN}Starting interactive container...${NC}"
-    docker compose -f "$COMPOSE_FILE" run --rm -i webcam
+    # Check if container is already running
+    if check_running; then
+        echo -e "${YELLOW}Webcam container is already running. Stop it first to start a new capture.${NC}"
+        return
+    fi
+    
+    echo -e "${CYAN}Choose run mode:${NC}"
+    echo -e "${GREEN}1. Single capture${NC} (Take one set of snapshots now)"
+    echo -e "${GREEN}2. Recurring capture${NC} (Take snapshots every hour)"
+    echo
+    read -p "Enter choice (1/2): " mode_choice
+    
+    case $mode_choice in
+        1)
+            echo -e "${CYAN}Starting single capture...${NC}"
+            docker compose -f "$COMPOSE_FILE" run --rm --entrypoint /app/start-single.sh webcam
+            ;;
+        2)
+            echo -e "${CYAN}Starting recurring capture...${NC}"
+            docker compose -f "$COMPOSE_FILE" up -d --entrypoint /app/start-recurring.sh
+            echo -e "${GREEN}Container started in background. Use 'docker logs webcam' to view progress.${NC}"
+            ;;
+        *)
+            echo -e "${RED}Invalid choice.${NC}"
+            ;;
+    esac
 }
 
 # Function to stop capture
