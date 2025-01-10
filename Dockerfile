@@ -64,6 +64,6 @@ exec python -u webcam_snapshot.py --mode recurring --interval 1 --no-interactive
 ' > /app/start-recurring.sh \
     && chmod +x /app/start-recurring.sh
 
-# Default to single mode
-ENTRYPOINT ["/app/start-single.sh"]
+# Default to recurring mode
+ENTRYPOINT ["/app/start-recurring.sh"]
 

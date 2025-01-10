@@ -67,11 +67,11 @@ start_capture() {
     case $mode_choice in
         1)
             echo -e "${CYAN}Starting single capture...${NC}"
-            docker compose -f "$COMPOSE_FILE" run --rm --entrypoint /app/start-single.sh webcam
+            docker compose -f "$COMPOSE_FILE" run --rm webcam /app/start-single.sh
             ;;
         2)
             echo -e "${CYAN}Starting recurring capture...${NC}"
-            docker compose -f "$COMPOSE_FILE" up -d --entrypoint /app/start-recurring.sh
+            docker compose -f "$COMPOSE_FILE" up -d
             echo -e "${GREEN}Container started in background. Use 'docker logs webcam' to view progress.${NC}"
             ;;
         *)
