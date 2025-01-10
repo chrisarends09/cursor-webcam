@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Your Webcams</h2>
+        {% if user_webcams %}
+        <div class="row">
+            {% for user_webcam in user_webcams %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ user_webcam.webcam.name }}</h5>
+                        <p class="card-text">{{ user_webcam.webcam.description }}</p>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {% if user_webcam.interval_hours %}
+                                Interval: {{ user_webcam.interval_hours }} hours<br>
+                                Next capture: {{ user_webcam.next_capture.strftime('%Y-%m-%d %H:%M:%S') }}
+                                {% else %}
+                                Manual capture only
+                                {% endif %}
+                            </small>
+                        </p>
+                        <form action="{{ url_for('webcam.capture', webcam_id=user_webcam.webcam_id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-primary">Capture Now</button>
+                        </form>
+                        <form action="{{ url_for('webcam.delete', webcam_id=user_webcam.webcam_id) }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No webcams configured. Add some from the list below!</p>
+        {% endif %}
+
+        <h2 class="mt-4">Available Webcams</h2>
+        <div class="row">
+            {% for webcam in available_webcams %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ webcam.name }}</h5>
+                        <p class="card-text">{{ webcam.description }}</p>
+                        <form action="{{ url_for('webcam.select', webcam_id=webcam.id) }}" method="post">
+                            <div class="mb-3">
+                                <select name="interval" class="form-select">
+                                    <option value="">Manual capture only</option>
+                                    <option value="1">Every 1 hour</option>
+                                    <option value="2">Every 2 hours</option>
+                                    <option value="8">Every 8 hours</option>
+                                    <option value="12">Every 12 hours</option>
+                                    <option value="24">Every 24 hours</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success">Add to My Webcams</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

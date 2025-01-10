@@ -1,129 +1,70 @@
 #!/bin/bash
 
-# ANSI color codes
-CYAN='\033[0;36m'
+# Colors
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Set the compose file to use
-COMPOSE_FILE="docker-compose.yaml"
-
-# Function to check if compose file exists
-check_compose_file() {
-    if [ ! -f "$COMPOSE_FILE" ]; then
-        echo -e "${RED}Error: $COMPOSE_FILE not found!${NC}"
-        exit 1
-    fi
+# Functions
+check_dependencies() {
+    command -v docker >/dev/null 2>&1 || { echo -e "${RED}Docker is required but not installed.${NC}" >&2; exit 1; }
+    command -v docker-compose >/dev/null 2>&1 || { echo -e "${RED}Docker Compose is required but not installed.${NC}" >&2; exit 1; }
 }
 
-# Function to check if container is running
-check_running() {
-    docker ps --format "{{.Names}}" | grep -q "^webcam$"
-    return $?
+deploy_docker() {
+    echo -e "${GREEN}Deploying with Docker...${NC}"
+    docker-compose up -d
+    docker-compose exec web flask db upgrade
+    docker-compose exec web python -m app.init_db
 }
 
-# Function to display menu
-show_menu() {
-    echo -e "${CYAN}Webcam Snapshot Script Control${NC}"
-    echo -e "${CYAN}-----------------------------${NC}"
-    echo -e "${GREEN}1. Start new capture${NC}"
-    echo "   - Choose 'Run once' to take a single set of snapshots"
-    echo "   - Choose 'Run recurring' to take snapshots at regular intervals"
-    echo -e "   - ${YELLOW}Recurring intervals available: 1, 8, 12, or 24 hours${NC}"
-    echo "   - All snapshots are saved locally and sent to Discord"
-    echo
-    echo -e "${GREEN}2. Stop current capture${NC}"
-    echo "   - Stops any running capture process"
-    echo -e "   - ${YELLOW}Safe to use even if no capture is running${NC}"
-    echo
-    echo -e "${GREEN}3. View logs${NC}"
-    echo "   - Shows detailed logs of the capture process"
-    echo "   - Includes timing and status of all snapshots"
-    echo
-    echo -e "${GREEN}4. Exit${NC}"
-    echo "   - Exits this control menu"
-    echo -e "   - ${YELLOW}Does NOT stop running captures (use option 2 first)${NC}"
-    echo
-}
-
-# Function to start capture
-start_capture() {
-    check_compose_file
+deploy_manual() {
+    echo -e "${GREEN}Setting up virtual environment...${NC}"
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements-prod.txt
     
-    # Check if container is already running
-    if check_running; then
-        echo -e "${YELLOW}Webcam container is already running. Stop it first to start a new capture.${NC}"
-        return
-    fi
+    echo -e "${GREEN}Initializing database...${NC}"
+    flask db upgrade
+    python -m app.init_db
     
-    echo -e "${CYAN}Choose run mode:${NC}"
-    echo -e "${GREEN}1. Single capture${NC} (Take one set of snapshots now)"
-    echo -e "${GREEN}2. Recurring capture${NC} (Take snapshots every hour)"
-    echo
-    read -p "Enter choice (1/2): " mode_choice
-    
-    case $mode_choice in
-        1)
-            echo -e "${CYAN}Starting single capture...${NC}"
-            docker compose -f "$COMPOSE_FILE" run --rm webcam /app/start-single.sh
-            ;;
-        2)
-            echo -e "${CYAN}Starting recurring capture...${NC}"
-            docker compose -f "$COMPOSE_FILE" up -d
-            echo -e "${GREEN}Container started in background. Use 'docker logs webcam' to view progress.${NC}"
-            ;;
-        *)
-            echo -e "${RED}Invalid choice.${NC}"
-            ;;
-    esac
+    echo -e "${GREEN}Starting Gunicorn...${NC}"
+    gunicorn -w 4 -b 127.0.0.1:5000 "app:create_app()"
 }
 
-# Function to stop capture
-stop_capture() {
-    check_compose_file
-    echo -e "${CYAN}Stopping container...${NC}"
-    docker compose -f "$COMPOSE_FILE" down
-}
-
-# Function to view logs
-view_logs() {
-    check_compose_file
-    echo -e "${CYAN}Fetching logs...${NC}"
-    docker compose -f "$COMPOSE_FILE" logs
-}
-
-# Main loop
+# Main menu
 while true; do
-    show_menu
-    echo -e -n "${CYAN}Enter your choice ${GREEN}(1-4)${CYAN}: ${NC}"
-    read choice
+    echo -e "\n${GREEN}Webcam Manager Deployment${NC}"
+    echo "1. Deploy with Docker (recommended)"
+    echo "2. Deploy manually"
+    echo "3. Run development server"
+    echo "4. Run tests"
+    echo "5. Exit"
+    
+    read -p "Select an option: " choice
     
     case $choice in
         1)
-            echo -e "${CYAN}Starting capture...${NC}"
-            start_capture
+            check_dependencies
+            deploy_docker
             ;;
         2)
-            echo -e "${CYAN}Stopping capture...${NC}"
-            stop_capture
+            deploy_manual
             ;;
         3)
-            echo -e "${CYAN}Viewing logs...${NC}"
-            view_logs
+            source venv/bin/activate
+            flask run
             ;;
         4)
-            echo -e "${CYAN}Exiting...${NC}"
+            source venv/bin/activate
+            ./run_tests.sh
+            ;;
+        5)
+            echo -e "${GREEN}Goodbye!${NC}"
             exit 0
             ;;
         *)
-            echo -e "${RED}Invalid choice. Please try again.${NC}"
+            echo -e "${RED}Invalid option${NC}"
             ;;
     esac
-    
-    echo
-    echo -e -n "${YELLOW}Press Enter to continue...${NC}"
-    read
-    clear
 done 

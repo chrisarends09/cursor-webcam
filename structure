@@ -1,0 +1,85 @@
+# Project Structure
+
+```
+cursor-webcam/
+├── app/                      # Main application package
+│   ├── __init__.py          # App initialization and factory
+│   ├── extensions.py        # Flask extensions (SQLAlchemy, etc.)
+│   ├── main.py              # Main application logic
+│   ├── webcam_handlers.py   # Webcam capture handlers
+│   ├── models/              # Database models
+│   │   ├── __init__.py
+│   │   ├── webcam.py       # Webcam model
+│   │   └── user.py         # User model
+│   ├── routes/             # Route handlers
+│   │   ├── __init__.py
+│   │   ├── main.py         # Main routes
+│   │   ├── api.py          # API routes
+│   │   └── auth.py         # Authentication routes
+│   ├── static/             # Static files
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── img/
+│   ├── templates/          # Jinja2 templates
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   └── webcams/
+│   └── utils/              # Utility functions
+│       ├── __init__.py
+│       ├── webcam_capture.py
+│       └── discord.py
+├── migrations/             # Database migrations
+├── snapshots/             # Captured webcam images
+├── logs/                  # Application logs
+├── tests/                # Test suite
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── test_webcam.py
+├── .env                   # Environment variables
+├── .env.example          # Example environment file
+├── .gitignore
+├── docker-compose.yaml   # Docker compose configuration
+├── Dockerfile           # Docker build instructions
+├── requirements.txt     # Development dependencies
+├── requirements-prod.txt # Production dependencies
+└── README.md           # Project documentation
+```
+
+## Key Directories and Files
+
+### `/app`
+- Core application code
+- Contains all the Flask blueprints, models, and utilities
+
+### `/app/models`
+- Database models using SQLAlchemy
+- Defines data structure and relationships
+
+### `/app/routes`
+- URL routing and request handling
+- Organized by feature/function
+
+### `/app/utils`
+- Helper functions and utilities
+- Webcam capture and Discord integration logic
+
+### `/app/static` and `/app/templates`
+- Frontend assets and Jinja2 templates
+- CSS, JavaScript, and images
+
+### `/snapshots`
+- Directory for storing captured webcam images
+- Organized by date/webcam
+
+### `/migrations`
+- Database migration scripts
+- Version control for database schema
+
+### `/tests`
+- Test suite for the application
+- Unit and integration tests
+
+### Configuration Files
+- `.env`: Environment-specific configuration
+- `docker-compose.yaml`: Container orchestration
+- `requirements.txt`: Python dependencies

@@ -1,21 +1,9 @@
-# Environment variables
-.env
-
-# Snapshot files but keep directory
-snapshots/*.jpg
-snapshots/**/*.jpg
-
-# Log files
-*.log
-webcam_snapshot.log
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -32,12 +20,58 @@ wheels/
 .installed.cfg
 *.egg
 
-# Docker
-.docker/
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
 
-# IDE specific files
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store 
+.DS_Store
+
+# Application specific
+snapshots/*
+!snapshots/.gitkeep
+logs/*
+!logs/.gitkeep
+*.log
+
+# Flask
+instance/
+.webassets-cache
+flask_session/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.docker/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Misc
+*.bak
+*.tmp
+*.temp
+.env.local
+.env.*.local
+
+# Keep these files
+!.env.example
+!docker-compose.yaml
+!requirements.txt
+!requirements-prod.txt 

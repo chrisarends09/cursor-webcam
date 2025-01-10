@@ -1,0 +1,67 @@
+# Environment variables
+.env
+.env.*
+.flaskenv
+
+# Snapshot files but keep directory
+snapshots/*.jpg
+snapshots/**/*.jpg
+snapshots/*.png
+snapshots/**/*.png
+
+# Log files
+*.log
+webcam_snapshot.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Redis
+*.rdb
+dump.rdb 

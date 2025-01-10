@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2>System Dashboard</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- System Resources -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">System Resources</h5>
+            </div>
+            <div class="card-body">
+                <h6>CPU Usage</h6>
+                <div class="progress mb-3">
+                    <div id="cpu-gauge" class="progress-bar" role="progressbar"></div>
+                </div>
+
+                <h6>Memory Usage</h6>
+                <div id="memory-usage" class="mb-3"></div>
+
+                <h6>Disk Usage</h6>
+                <div id="disk-usage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Stats -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Application Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <h6>Total Snapshots</h6>
+                        <h3 id="total-snapshots">-</h3>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h6>Storage Used</h6>
+                        <h3 id="total-storage">-</h3>
+                    </div>
+                    <div class="col-6">
+                        <h6>Active Users</h6>
+                        <h3 id="active-users">-</h3>
+                    </div>
+                    <div class="col-6">
+                        <h6>Active Webcams</h6>
+                        <h3 id="active-webcams">-</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Snapshot Statistics -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Snapshot Statistics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="snapshot-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/system.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %} 

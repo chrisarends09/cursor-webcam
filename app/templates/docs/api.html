@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>API Documentation</h2>
+        <p>Welcome to the Webcam Manager API documentation. The API provides programmatic access to webcam management functionality.</p>
+        
+        <h3>Authentication</h3>
+        <p>The API uses Bearer token authentication. To get a token:</p>
+        <ol>
+            <li>Log in to your account</li>
+            <li>Make a POST request to <code>/api/auth/token</code></li>
+            <li>Include the token in subsequent requests using the Authorization header:
+                <code>Authorization: Bearer your_token_here</code>
+            </li>
+        </ol>
+        
+        <h3>Rate Limiting</h3>
+        <p>API endpoints are rate limited to prevent abuse. Current limits:</p>
+        <ul>
+            <li>General endpoints: 100 requests per minute</li>
+            <li>System status: 60 requests per minute</li>
+            <li>Snapshot statistics: 30 requests per minute</li>
+        </ul>
+        
+        <h3>Interactive Documentation</h3>
+        <p>
+            <a href="{{ url_for('docs.swagger_ui') }}" class="btn btn-primary">
+                Swagger UI Documentation
+            </a>
+            <a href="{{ url_for('docs.postman_collection') }}" class="btn btn-secondary">
+                Download Postman Collection
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %} 
