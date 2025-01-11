@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TextAreaField, SubmitField
+from wtforms import StringField, SelectField, TextAreaField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, URL, Length
 
 class WebcamForm(FlaskForm):
+    id = HiddenField('ID')  # For editing existing webcams
     name = StringField('Name', validators=[DataRequired(), Length(max=64)])
     description = TextAreaField('Description', validators=[Length(max=256)])
     url = StringField('URL', validators=[DataRequired(), URL(), Length(max=512)])
@@ -17,4 +18,4 @@ class WebcamForm(FlaskForm):
         ('html_image', 'HTML Image')
     ], validators=[DataRequired()])
     resort = StringField('Resort', validators=[Length(max=64)])
-    submit = SubmitField('Add Webcam') 
+    submit = SubmitField('Save Webcam') 

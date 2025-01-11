@@ -2,6 +2,7 @@ from flask import Flask
 import os
 import logging
 from app.extensions import db, login_manager, mail, migrate
+from apscheduler.schedulers.background import BackgroundScheduler
 
 def create_app():
     app = Flask(__name__)
@@ -38,5 +39,12 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(webcam_bp)
     app.register_blueprint(errors_bp)
+    
+    # Initialize scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    
+    # Add scheduler to app context
+    app.scheduler = scheduler
     
     return app 

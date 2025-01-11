@@ -10,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import time
+import re
+import subprocess
 
 class WebcamManager:
     def __init__(self):
@@ -220,22 +222,58 @@ class WebcamManager:
         """Capture from WetMet webcam"""
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Referer': 'https://api.wetmet.net/'
             }
+            
             response = requests.get(url, headers=headers)
             logging.info(f"WetMet response status: {response.status_code}")
+            
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                logging.info(f"Parsing HTML content: {soup.prettify()[:500]}...")
-                img_tag = soup.find('img', id='webcam')
-                logging.info(f"Found img tag: {img_tag}")
-                if img_tag and 'src' in img_tag.attrs:
-                    img_url = img_tag['src']
-                    logging.info(f"Found image URL: {img_url}")
-                    if not img_url.startswith('http'):
-                        img_url = f"https://{img_url}" if img_url.startswith('//') else f"{url.rstrip('/')}/{img_url.lstrip('/')}"
-                    logging.info(f"Final image URL: {img_url}")
-                    return self.capture_direct_image(img_url, save_path)
+                
+                # Look for video source in video.js setup
+                scripts = soup.find_all('script')
+                stream_url = None
+                
+                for script in scripts:
+                    if script.string and 'videojs' in script.string.lower():
+                        # Look for HLS stream URL
+                        matches = re.findall(r'["\'](https?://[^\s<>"\']+?\.m3u8[^\s<>"\']*)["\']', script.string)
+                        if matches:
+                            stream_url = matches[0]
+                            logging.info(f"Found HLS stream URL: {stream_url}")
+                            break
+                
+                if stream_url:
+                    # Use ffmpeg to capture frame from stream
+                    command = [
+                        'ffmpeg',
+                        '-y',  # Overwrite output file
+                        '-i', stream_url,  # Input stream
+                        '-vframes', '1',  # Capture one frame
+                        '-f', 'image2',  # Output format
+                        save_path
+                    ]
+                    
+                    # Wait for potential advertisement
+                    time.sleep(4)
+                    
+                    try:
+                        result = subprocess.run(command, capture_output=True, text=True)
+                        if result.returncode == 0:
+                            logging.info("Successfully captured frame from WetMet stream")
+                            return True
+                        else:
+                            logging.error(f"FFmpeg error: {result.stderr}")
+                    except Exception as e:
+                        logging.error(f"FFmpeg execution error: {str(e)}")
+                        return False
+                else:
+                    logging.error("No stream URL found in WetMet page")
+                    return False
+                
         except Exception as e:
             logging.error(f"Error capturing WetMet webcam: {str(e)}")
             if 'response' in locals():
@@ -254,28 +292,116 @@ class WebcamManager:
         """Capture from API endpoint"""
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'image/jpeg,image/png,application/json,*/*',
+                'Referer': 'https://www.mtbachelor.com/'
             }
+            
             response = requests.get(url, headers=headers)
+            logging.info(f"API response status: {response.status_code}")
+            
             if response.status_code == 200:
-                data = response.json()
-                # Debug log the response
-                logging.info(f"API response: {data}")
-                # Mt Bachelor specific API handling
-                if 'url' in data:
-                    return self.capture_direct_image(data['url'], save_path)
+                content_type = response.headers.get('Content-Type', '')
+                logging.info(f"Content-Type: {content_type}")
+                
+                # Check if response is a direct image
+                if 'image' in content_type.lower():
+                    logging.info("Received direct image response")
+                    with open(save_path, 'wb') as f:
+                        f.write(response.content)
+                    logging.info(f"Successfully saved direct image. Size: {len(response.content)} bytes")
+                    return True
+                    
+                # Try to parse as JSON
+                elif 'application/json' in content_type.lower():
+                    try:
+                        data = response.json()
+                        logging.info(f"API response data: {data}")
+                        
+                        # Mt Bachelor specific API handling
+                        if 'data' in data and 'url' in data['data']:
+                            image_url = data['data']['url']
+                            logging.info(f"Found image URL: {image_url}")
+                            return self.capture_direct_image(image_url, save_path)
+                    except ValueError as e:
+                        logging.error(f"Failed to parse JSON response: {str(e)}")
+                        
+                # Unknown content type - try to save as image anyway
+                else:
+                    logging.warning(f"Unknown content type: {content_type}")
+                    try:
+                        with open(save_path, 'wb') as f:
+                            f.write(response.content)
+                        # Verify it's a valid image
+                        img = cv2.imread(save_path)
+                        if img is not None:
+                            logging.info(f"Successfully saved and verified image. Size: {len(response.content)} bytes")
+                            return True
+                        else:
+                            logging.error("Invalid image data")
+                            os.remove(save_path)
+                    except Exception as e:
+                        logging.error(f"Error saving response as image: {str(e)}")
+                
+            return False
+            
         except Exception as e:
             logging.error(f"Error capturing from API: {str(e)}")
-            logging.error(f"Response content: {response.text if 'response' in locals() else 'No response'}")
-        return False
+            if 'response' in locals():
+                logging.error(f"Response headers: {dict(response.headers)}")
+            return False
 
     def capture_nest(self, url, save_path):
         """Capture from Nest camera"""
         try:
-            return self.capture_embedded_webcam(url, save_path)
+            logging.info(f"Starting Nest capture for URL: {url}")
+            
+            # Additional Chrome options for video
+            chrome_options = Options()
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--autoplay-policy=no-user-gesture-required')
+            
+            driver = webdriver.Chrome(options=chrome_options)
+            try:
+                driver.get(url)
+                
+                # Wait for video element to be present
+                logging.info("Waiting for video element...")
+                video = WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "video"))
+                )
+                
+                # Wait for video to start playing
+                logging.info("Waiting for video to load...")
+                time.sleep(8)  # Give video time to start playing
+                
+                # Take screenshot
+                logging.info("Taking screenshot...")
+                driver.save_screenshot(save_path)
+                
+                # Verify the screenshot
+                img = cv2.imread(save_path)
+                if img is not None:
+                    logging.info(f"Successfully captured Nest screenshot: {save_path}")
+                    return True
+                else:
+                    logging.error("Failed to verify screenshot")
+                    if os.path.exists(save_path):
+                        os.remove(save_path)
+                    return False
+                    
+            finally:
+                driver.quit()
+                
         except Exception as e:
             logging.error(f"Error capturing from Nest: {str(e)}")
-        return False
+            logging.error(f"URL: {url}")
+            if 'driver' in locals():
+                driver.quit()
+            return False
 
     def capture_click2stream(self, url, save_path):
         """Capture from Click2Stream"""
@@ -288,15 +414,38 @@ class WebcamManager:
     def capture_html_image(self, url, save_path):
         """Capture image embedded in HTML"""
         try:
+            logging.info(f"Starting HTML image capture from {url}")
             response = requests.get(url)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                img_tag = soup.find('img')
+                
+                # Look for image with specific pattern in src attribute
+                img_tag = soup.find('img', src=lambda x: x and 'DeadmanP-CabbageHill' in x)
+                
                 if img_tag and 'src' in img_tag.attrs:
-                    img_url = img_tag['src']
+                    # Clean the URL - strip whitespace and normalize
+                    img_url = img_tag['src'].strip()
+                    logging.info(f"Found image URL: {img_url}")
+                    
+                    # Handle relative URLs
                     if not img_url.startswith('http'):
-                        img_url = f"https://{img_url}" if img_url.startswith('//') else f"{url.rstrip('/')}/{img_url.lstrip('/')}"
+                        base_url = '/'.join(url.split('/')[:3])  # Get domain
+                        img_url = f"{base_url}/{img_url.lstrip('/')}"
+                    
+                    # Ensure URL is properly encoded
+                    img_url = img_url.replace(' ', '%20')
+                    logging.info(f"Cleaned image URL: {img_url}")
+                    
                     return self.capture_direct_image(img_url, save_path)
+                else:
+                    logging.error("Could not find image with matching pattern")
+                    # Log available images for debugging
+                    all_images = soup.find_all('img')
+                    for img in all_images:
+                        logging.debug(f"Found image: {img.get('src', 'No src')}")
+            else:
+                logging.error(f"Failed to fetch page: {response.status_code}")
+            
         except Exception as e:
             logging.error(f"Error capturing HTML image: {str(e)}")
         return False

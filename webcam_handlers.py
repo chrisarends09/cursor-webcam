@@ -531,27 +531,45 @@ class WebcamManager:
         with open(yaml_path, 'r') as f:
             return yaml.safe_load(f)
 
-    def capture_webcam(self, webcam_config, output_dir):
+    def capture_webcam(self, webcam_config, base_path):
+        """Main method to capture webcam based on type"""
         try:
-            handler = self.handlers.get(webcam_config['type'])
-            if not handler:
-                logging.error(f"No handler found for webcam type: {webcam_config['type']}")
-                return False
-            
             # Create timestamped filename
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_path = f"{output_dir}/{webcam_config['name']}_{timestamp}.jpg"
+            output_path = f"{base_path}/{webcam_config['name']}_{timestamp}.jpg"
             
             logging.info(f"Attempting to capture {webcam_config['name']} using {webcam_config['type']} handler")
             # Pass webcam_config to the handler
-            success = handler.capture_frame(webcam_config['url'], output_path, webcam_config)
+            success = self.handlers[webcam_config['type']].capture_frame(webcam_config['url'], output_path, webcam_config)
             
             if success:
                 logging.info(f"Successfully captured {webcam_config['name']}")
+                logging.debug(f"File exists after capture: {os.path.exists(output_path)}")
+                if os.path.exists(output_path):
+                    file_size = os.path.getsize(output_path)
+                    logging.debug(f"File size: {file_size} bytes")
+                    logging.debug(f"File permissions: {oct(os.stat(output_path).st_mode)[-3:]}")
+                    
+                    # Verify image is valid
+                    try:
+                        img = cv2.imread(output_path)
+                        if img is None:
+                            logging.error("Captured file is not a valid image")
+                            return False
+                    except Exception as e:
+                        logging.error(f"Error verifying image: {str(e)}")
+                        return False
+                        
+                    # Attempt to send to Discord
+                    if not send_to_discord(output_path, webcam_config['name']):
+                        logging.error("Failed to send image to Discord")
+                        return False
+                        
+                return True
             else:
                 logging.error(f"Failed to capture {webcam_config['name']}")
-            return success
-            
+                return False
+                
         except Exception as e:
-            logging.error(f"Error capturing {webcam_config['name']}: {str(e)}")
+            logging.error(f"Error in capture_webcam: {str(e)}", exc_info=True)
             return False 

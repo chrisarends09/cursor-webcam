@@ -19,9 +19,12 @@ from webcam_handlers import WebcamManager
 init(autoreset=True)  # Initialize colorama
 
 # Update the webhook environment variable
-DISCORD_WEBHOOKS = os.getenv('DISCORD_WEBHOOK_URLS', '').split(',')
-if not DISCORD_WEBHOOKS or not DISCORD_WEBHOOKS[0]:
-    raise ValueError("DISCORD_WEBHOOK_URLS environment variable is not set")
+DISCORD_WEBHOOKS = [url.strip() for url in os.getenv('DISCORD_WEBHOOK_URLS', '').split(',') if url.strip()]
+if not DISCORD_WEBHOOKS:
+    logging.error("No valid Discord webhook URLs found in environment variables")
+    raise ValueError("DISCORD_WEBHOOK_URLS environment variable is not properly set")
+else:
+    logging.info(f"Loaded {len(DISCORD_WEBHOOKS)} Discord webhooks")
 
 def get_stream_url(html_content, camera_name):
     """Extract the actual stream URL from the HTML content."""
@@ -68,23 +71,42 @@ def send_to_discord(file_path, description):
             logging.error(f"File not found: {file_path}")
             return False
             
-        logging.info(f"Sending file to Discord webhooks: {file_path}")
-        success = False
+        logging.info(f"Attempting to send file to Discord: {file_path}")
+        file_size = os.path.getsize(file_path)
+        logging.info(f"File size: {file_size} bytes")
         
+        if file_size == 0:
+            logging.error("File is empty")
+            return False
+            
+        success = False
         for webhook_url in DISCORD_WEBHOOKS:
+            if not webhook_url.strip():  # Skip empty webhook URLs
+                continue
+                
             try:
                 with open(file_path, 'rb') as f:
                     files = {
-                        'file': (os.path.basename(file_path), f)
+                        'file': (os.path.basename(file_path), f, 'image/jpeg')
                     }
+                    payload = {
+                        'content': f"📸 {description} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                    }
+                    
                     response = requests.post(
-                        webhook_url.strip(),  # Remove any whitespace
+                        webhook_url.strip(),
                         files=files,
-                        data={'content': f"{description} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"}
+                        data=payload,
+                        timeout=30  # Add timeout
                     )
-                    response.raise_for_status()
-                    success = True
-                    logging.info(f"Successfully sent snapshot to Discord webhook for {description}")
+                    
+                    logging.info(f"Discord response status: {response.status_code}")
+                    if response.status_code == 200:
+                        success = True
+                        logging.info(f"Successfully sent to webhook")
+                    else:
+                        logging.error(f"Discord API error: {response.text}")
+                        
             except Exception as e:
                 logging.error(f"Failed to send to webhook {webhook_url[:50]}...: {str(e)}")
                 
