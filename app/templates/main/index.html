@@ -1,72 +1,132 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Your Webcams</h2>
-            <a href="{{ url_for('webcam.list') }}" class="btn btn-primary">Manage Available Webcams</a>
-        </div>
+<div class="container">
+    <h1>Webcam Dashboard by Chris</h1>
+    
+    <style>
+        
+        .webcam-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        .webcam-card {
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 180px;
+        }
 
-        {% if user_webcams %}
-        <div class="row">
-            {% for user_webcam in user_webcams %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ user_webcam.webcam.name }}</h5>
-                        <p class="card-text">{{ user_webcam.webcam.description }}</p>
-                        <p class="card-text">
-                            <small class="text-muted">
-                                {% if user_webcam.interval_hours %}
-                                Interval: {{ user_webcam.interval_hours }} hours<br>
-                                Next capture: {{ user_webcam.next_capture.strftime('%Y-%m-%d %H:%M:%S') }}
-                                {% else %}
-                                Manual capture only
-                                {% endif %}
-                            </small>
-                        </p>
-                        <form action="{{ url_for('webcam.capture', webcam_id=user_webcam.webcam_id) }}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-primary">Capture Now</button>
-                        </form>
-                        <form action="{{ url_for('webcam.delete', webcam_id=user_webcam.webcam_id) }}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-danger">Remove</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No webcams configured. Add some from the list below!</p>
-        {% endif %}
+        .webcam-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.2rem;
+        }
 
-        <h2 class="mt-4">Available Webcams</h2>
-        <div class="row">
-            {% for webcam in available_webcams %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ webcam.name }}</h5>
-                        <p class="card-text">{{ webcam.description }}</p>
-                        <form action="{{ url_for('webcam.select', webcam_id=webcam.id) }}" method="post">
-                            <div class="mb-3">
-                                <select name="interval" class="form-select">
-                                    <option value="">Manual capture only</option>
-                                    <option value="1">Every 1 hour</option>
-                                    <option value="2">Every 2 hours</option>
-                                    <option value="8">Every 8 hours</option>
-                                    <option value="12">Every 12 hours</option>
-                                    <option value="24">Every 24 hours</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-success">Add to My Webcams</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+        .webcam-card p {
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        /* Responsive breakpoints */
+        @media (max-width: 1400px) {
+            .webcam-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .webcam-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 800px) {
+            .webcam-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .webcam-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Make buttons look better */
+        .btn-primary {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        select.form-control {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
+
+    <h2>Your Webcams</h2>
+    {% if user_webcams %}
+    <div class="webcam-grid">
+        {% for user_webcam in user_webcams %}
+        <div class="webcam-card">
+            <h3>{{ user_webcam.webcam.name }}</h3>
+            <p>{{ user_webcam.webcam.description }}</p>
+            <p>Interval: {{ user_webcam.interval_hours }} hours</p>
+            {% if user_webcam.last_capture %}
+            <p>Last Capture: {{ user_webcam.last_capture.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            {% endif %}
+            {% if user_webcam.next_capture %}
+            <p>Next Capture: {{ user_webcam.next_capture.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            {% endif %}
+            <form action="{{ url_for('webcam.capture', webcam_id=user_webcam.webcam.id) }}" method="post">
+                <button type="submit" class="btn btn-primary">Capture Now</button>
+            </form>
         </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <p>No webcams configured. Add one below!</p>
+    {% endif %}
+    
+    <h2>Available Webcams</h2>
+    {% if available_webcams %}
+    <div class="webcam-grid">
+        {% for webcam in available_webcams %}
+        <div class="webcam-card">
+            <h3>{{ webcam.name }}</h3>
+            <p>{{ webcam.description }}</p>
+            <form action="{{ url_for('webcam.select', webcam_id=webcam.id) }}" method="post">
+                <div class="form-group">
+                    <label for="interval">Capture Interval (hours):</label>
+                    <select name="interval" id="interval" class="form-control">
+                        <option value="">Disabled</option>
+                        <option value="1">Every hour</option>
+                        <option value="8">Every 8 hours</option>
+                        <option value="12">Every 12 hours</option>
+                        <option value="24">Every 24 hours</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Webcam</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No webcams available.</p>
+    {% endif %}
 </div>
 {% endblock %} 

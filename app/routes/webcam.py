@@ -10,6 +10,7 @@ import logging
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
+from app.utils.scheduler import schedule_webcam_capture, remove_webcam_schedule
 
 webcam_bp = Blueprint('webcam', __name__, url_prefix='/webcam')
 
@@ -237,4 +238,35 @@ def delete_webcam(id):
 def list():
     """Display list of all webcams"""
     webcams = Webcam.query.all()
-    return render_template('webcam/list.html', webcams=webcams) 
+    return render_template('webcam/list.html', webcams=webcams)
+
+@webcam_bp.route('/webcam/select/<int:webcam_id>', methods=['POST'])
+@login_required
+def select_webcam(webcam_id):
+    interval = request.form.get('interval', type=int)
+    
+    user_webcam = UserWebcam.query.filter_by(
+        user_id=current_user.id,
+        webcam_id=webcam_id
+    ).first()
+    
+    if user_webcam:
+        # Update existing schedule
+        user_webcam.interval_hours = interval
+        if interval:
+            schedule_webcam_capture(user_webcam)
+        else:
+            remove_webcam_schedule(user_webcam)
+    else:
+        # Create new schedule
+        user_webcam = UserWebcam(
+            user_id=current_user.id,
+            webcam_id=webcam_id,
+            interval_hours=interval
+        )
+        db.session.add(user_webcam)
+        if interval:
+            schedule_webcam_capture(user_webcam)
+    
+    db.session.commit()
+    return redirect(url_for('main.index')) 

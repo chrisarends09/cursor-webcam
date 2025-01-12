@@ -1,77 +1,149 @@
-/* General styles */
+/* Basic styling */
 body {
-    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-/* Card styles */
-.card {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid rgba(0,0,0,0.125);
+/* Navigation */
+nav {
+    background-color: #333;
+    padding: 1rem;
 }
 
-/* Webcam card specific styles */
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nav-brand {
+    color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    margin-left: 1rem;
+}
+
+/* Webcam grid */
+.webcam-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
 .webcam-card {
-    transition: transform 0.2s;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
 }
 
-.webcam-card:hover {
-    transform: translateY(-5px);
-}
-
-.webcam-status {
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-
-/* Form styles */
-.form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-}
-
-/* Button styles */
-.btn {
-    font-weight: 500;
-}
-
-.btn-primary {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
-
-.btn-primary:hover {
-    background-color: #004494;
-    border-color: #004494;
-}
-
-/* Alert styles */
-.alert {
-    border-radius: 0.25rem;
+/* Forms */
+.form-group {
     margin-bottom: 1rem;
 }
 
-/* Navigation styles */
-.navbar {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
 }
 
-.navbar-brand {
-    font-weight: bold;
+/* Buttons */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .card {
-        margin-bottom: 1rem;
-    }
-    
-    .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Alerts */
+.alert {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Form errors */
+.error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Form improvements */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Container improvements */
+.container {
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Button improvements */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
 } 

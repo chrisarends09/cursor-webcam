@@ -38,6 +38,8 @@ RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}') \
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install Flask-APScheduler==1.12.3
 
 # Set environment variables
 ENV DISPLAY=:99
@@ -55,4 +57,8 @@ RUN mkdir -p /tmp/.X11-unix && \
 COPY ./docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Copy application files
+COPY config.py .
+COPY app app/
 

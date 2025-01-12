@@ -12,7 +12,7 @@ requests
 beautifulsoup4
 schedule
 colorama
-pyyaml
+pyyaml==6.0.1
 selenium
 werkzeug
 flask-mail
@@ -22,3 +22,5 @@ flask-swagger-ui==4.11.1
 flask-cors==4.0.0
 sentry-sdk[flask]==1.39.1
 APScheduler==3.10.1
+Flask-APScheduler==1.12.3
+pytz==2023.3

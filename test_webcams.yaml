@@ -1,0 +1,16 @@
+webcams:
+  test_resort:
+    - name: direct_image_test
+      type: direct_image
+      url: https://www.mtbachelor.com/webcams/base.jpg
+      description: Mt Bachelor Base Webcam
+    
+    - name: wetmet_test
+      type: wetmet
+      url: https://api.wetmet.net/webcam/1234
+      description: Wetmet Test Webcam
+    
+    - name: html_image_test
+      type: html_image
+      url: https://example.com/webcam.html
+      description: HTML Image Test Webcam 
